@@ -65,22 +65,34 @@ public class FogEffectFeature : ScriptableRendererFeature
                 material.SetFloat("_FogDensity", fogEffect.fogDensity.value);
                 material.SetFloat("_SkyBoxFogDensity", fogEffect.skyBoxFogDensity.value);
                 material.SetFloat("_FogOffset", fogEffect.fogOffset.value);
-                material.SetFloat("_SecondaryOffset", fogEffect.secondaryOffset.value);
+                material.SetFloat("_SecondaryFogOffset", fogEffect.secondaryFogOffset.value);
                 material.SetFloat("_GradientStrength", fogEffect.gradientStrength.value);
                 material.SetFloat("_FogScattering", fogEffect.fogScattering.value);
                 material.SetTexture("_NoiseTex", fogEffect.noiseTexture.value);
-                material.SetFloat("_NoiseScale", fogEffect.noiseScale.value);
-                material.SetFloat("_NoiseSpeed", fogEffect.noiseSpeed.value);
-                material.SetFloat("_HeightFactor", fogEffect.heightFactor.value);
-                material.SetFloat("_HeightOffset", fogEffect.heightOffset.value);
-                // material.SetFloat("_Anisotropy", fogEffect.anisotropy.value);
-           
+                material.SetFloat("_FogNoiseScale", fogEffect.fogNoiseScale.value);
+                material.SetFloat("_FogNoiseVelocity", fogEffect.fogNoiseVelocity.value);
+                material.SetFloat("_SkyBoxNoiseScale", fogEffect.skyBoxNoiseScale.value);
+                material.SetFloat("_SkyBoxNoiseVelocity", fogEffect.skyBoxNoiseVelocity.value);
+                material.SetFloat("_SkyBoxNoiseTransparency", fogEffect.skyBoxNoiseTransparency.value);
+                material.SetFloat("_RotateFogNoise", fogEffect.rotateFogNoise.value);
+                material.SetFloat("_RotateSkyBoxNoise", fogEffect.rotateSkyBoxNoise.value);
             }
 
-            // Blit from source to destination
-            cmd.Blit(source, source, material, 0);
+            RenderTargetIdentifier tempTexture = new RenderTargetIdentifier("_TemporaryTexture");
+            cmd.GetTemporaryRT(Shader.PropertyToID("_TemporaryTexture"), renderingData.cameraData.cameraTargetDescriptor);
+
+            // Blit from source to the temporary texture, then back to the source
+            cmd.Blit(source, tempTexture, material, 0);
+            cmd.Blit(tempTexture, source);
+
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
+            cmd.ReleaseTemporaryRT(Shader.PropertyToID("_TemporaryTexture"));
+
+            // Blit from source to destination
+            //cmd.Blit(source, source, material, 0);
+            //context.ExecuteCommandBuffer(cmd);
+            //CommandBufferPool.Release(cmd);
         }
     }
 }
